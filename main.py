@@ -29,21 +29,29 @@ VECTOR_DB_PATH = "chroma_db_multilingual"
 EMBEDDING_MODEL_NAME = "Qwen/Qwen3-Embedding-0.6B" # A robust and efficient model
 LLM_MODEL_NAME = "gemini-2.5-flash"
 PROMPT_TEMPLATE = """You are a helpful AI assistant for answering questions about a given document.
-You are given a question and a set of document chunks as context.
+You are given a question with desired language you should answer to and a set of document chunks as context IN BANGLA LANGUAGE.
 You must STRICTLY FOLLOW these rules:
-1. YOUR FINAL ANSWER MUST BE IN THE SAME LANGUAGE AS THE USER'S QUESTION.
-2. IF THE USER'S QUESTION IS IN English, YOUR ANSWER MUST BE IN English.
-3. IF THE USER'S QUESTION IS IN Bangla, YOUR ANSWER MUST BE IN Bangla.
-4. If the information to answer the question is not in the context, you MUST respond with one of the following sentences, matching the language of the question:
-   - For English questions: "Sorry, I am unable to answer this question from the provided document."
+1. EVEN THOUGH THE CONTEXT WILL BE IN BANGLA, YOU SHOULD ALWAYS ANSWER IN GIVEN ## DESIRED LANGUAGE ##.
+2. If the information to answer the question is not in the context, you MUST respond with one of the following sentences, matching the language of the question:
+   - For English questions: "Sorry, I am unable to answer this question."
    - For Bangla questions: "দুঃখিত, আপনার প্রশ্নটির উত্তর আমার জানা নেই।"
-5. Do not make up answers. Your response must be grounded in the provided context.
+3. Do not make up answers. Your response must be grounded in the provided context.
 
 Context:
 {context}
 
 Question: {question}
 Answer:"""
+
+# This is the NEW prompt for the initial CONDENSING step
+CONDENSE_QUESTION_PROMPT_TEMPLATE = """Given the following conversation and a follow-up question, rephrase the follow-up question to be a standalone question. The standalone question must be in the same language as the follow-up question.
+
+Chat History:
+{chat_history}
+
+Follow Up Input: {question}
+Standalone question:"""
+CONDENSE_PROMPT = PromptTemplate.from_template(CONDENSE_QUESTION_PROMPT_TEMPLATE)
 
 # --- FASTAPI APP INITIALIZATION ---
 app = FastAPI(
@@ -159,6 +167,7 @@ def initialize_llm_and_chain(vector_store):
         llm=llm,
         retriever=retriever,
         memory=memory,
+        condense_question_prompt=CONDENSE_PROMPT,
         return_source_documents=True,
         verbose=True,
         combine_docs_chain_kwargs={"prompt": qa_prompt}
