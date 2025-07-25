@@ -240,7 +240,7 @@ async def chat_with_document(request: ChatRequest):
 
         return ChatResponse(
             answer=result.get('answer', 'No answer found.'),
-            source_documents=source_docs_formatted
+            # source_documents=source_docs_formatted
         )
     except Exception as e:
         print(f"An error occurred during chat processing: {e}")
